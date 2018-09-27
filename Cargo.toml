@@ -1,0 +1,29 @@
+[package]
+name = "cardano-http-bridge"
+version = "0.0.1"
+authors = [ "Nicolas Di Prima <nicolas.diprima@iohk.io>"
+          , "Vincent Hanquez <vincent.hanquez@iohk.io>"
+          ]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/input-output-hk/cardano-cli"
+homepage = "https://github.com/input-output-hk/cardano-cli#README.md"
+documentation = "https://github.com/input-output-hk/cardano-cli#USAGE.md"
+description = """
+The Cardano HTTP bridge
+
+* HTTP access backend to the cardano blockchain
+* Efficient network & storage
+* Proxy / relay
+"""
+
+[dependencies]
+cbor_event = "1.0"
+cryptoxide = "0.1"
+exe-common      = { path = "cardano-deps/exe-common" }
+cardano         = { path = "cardano-deps/cardano" }
+cardano-storage = { path = "cardano-deps/storage" }
+storage-units   = { path = "cardano-deps/storage-units" }
+iron = "*"
+router ="*"
+log = "0.4"
