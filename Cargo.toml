@@ -6,9 +6,9 @@ authors = [ "Nicolas Di Prima <nicolas.diprima@iohk.io>"
           ]
 edition = "2018"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/input-output-hk/cardano-cli"
-homepage = "https://github.com/input-output-hk/cardano-cli#README.md"
-documentation = "https://github.com/input-output-hk/cardano-cli#USAGE.md"
+repository = "https://github.com/input-output-hk/cardano-http-bridge"
+homepage = "https://github.com/input-output-hk/cardano-http-bridge#README.md"
+documentation = "https://github.com/input-output-hk/cardano-http-bridge#USAGE.md"
 description = """
 The Cardano HTTP bridge
 
