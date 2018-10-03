@@ -8,7 +8,6 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/input-output-hk/cardano-http-bridge"
 homepage = "https://github.com/input-output-hk/cardano-http-bridge#README.md"
-documentation = "https://github.com/input-output-hk/cardano-http-bridge#USAGE.md"
 description = """
 The Cardano HTTP bridge
 
@@ -18,12 +17,19 @@ The Cardano HTTP bridge
 """
 
 [dependencies]
-cbor_event = "1.0"
-cryptoxide = "0.1"
-exe-common      = { path = "cardano-deps/exe-common" }
 cardano         = { path = "cardano-deps/cardano" }
 cardano-storage = { path = "cardano-deps/storage" }
-storage-units   = { path = "cardano-deps/storage-units" }
+exe-common      = { path = "cardano-deps/exe-common" }
+
+serde = "1.0"
+serde_derive = "1.0"
+serde_yaml = "0.7"
+log = "0.4"
+env_logger = "0.5.9"
 iron = "*"
 router ="*"
-log = "0.4"
+
+[dependencies.clap]
+version = "2.31"
+default-features = false
+features = [ "suggestions", "color", "wrap_help" ]
