@@ -1,5 +1,5 @@
 use super::config::{Config, Networks, Network};
-use exe_common::sync;
+use exe_common::{sync, parse_genesis_data, genesis_data};
 use super::handlers;
 use iron;
 use router::Router;
@@ -55,6 +55,13 @@ fn refresh_network(label: &str, net: &Network) {
     let netcfg_file = net.storage.config.get_config_file();
     let net_cfg = net::Config::from_file(&netcfg_file).expect("no network config present");
 
-    sync::net_sync(&mut sync::get_peer(&label, &net_cfg, true), &net_cfg, &net.storage, false)
+    let genesis_data = {
+        let genesis_data = genesis_data::get_genesis_data(&net_cfg.genesis_prev)
+            .expect("genesis data not found");
+        parse_genesis_data::parse_genesis_data(genesis_data)
+    };
+
+    sync::net_sync(&mut sync::get_peer(&label, &net_cfg, true), &net_cfg,
+                   &genesis_data, &net.storage, false)
         .unwrap_or_else(|err| { warn!("Sync failed: {:?}", err) });
 }
