@@ -4,7 +4,7 @@ use cardano_storage::{self, Storage};
 use cardano_storage::config::StorageConfig;
 use exe_common::config::{net};
 use std::{io, result, path::{PathBuf, Path}, env::{VarError, self, home_dir}};
-use std::{num::{ParseIntError}, collections::{BTreeMap}, sync::{Arc}};
+use std::{num::{ParseIntError}, collections::{BTreeMap}, sync::{Arc, RwLock}};
 use std::collections::HashSet;
 
 #[derive(Debug)]
@@ -71,7 +71,7 @@ impl Config {
             let network = Network {
                 path: netcfg_dir,
                 config: self.get_network_config(name)?,
-                storage: Arc::new(self.get_storage(name)?)
+                storage: Arc::new(RwLock::new(self.get_storage(name)?))
             };
 
             networks.insert(name.to_owned(), network);
@@ -123,7 +123,9 @@ impl Config {
 pub struct Network {
     pub path: PathBuf,
     pub config: net::Config,
-    pub storage: Arc<cardano_storage::Storage>,
+    // FIXME: This uses RwLock because net_sync() mutates the block
+    // lookup state.
+    pub storage: Arc<RwLock<cardano_storage::Storage>>,
 }
 
 pub type Networks = BTreeMap<String, Network>;

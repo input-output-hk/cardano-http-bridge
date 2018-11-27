@@ -28,7 +28,7 @@ fn main() {
     use clap::{App, Arg, SubCommand};
 
     env_logger::Builder::from_default_env()
-        .filter_level(log::LevelFilter::Info)
+        .filter_level(log::LevelFilter::Debug)
         .init();
 
     let matches = App::new(crate_name!())

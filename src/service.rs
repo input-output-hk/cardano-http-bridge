@@ -22,8 +22,8 @@ fn start_http_server(cfg: &Config, networks: Arc<Networks>) -> iron::Listening {
     handlers::pack::Handler::new(networks.clone()).route(&mut router);
     handlers::epoch::Handler::new(networks.clone()).route(&mut router);
     handlers::tip::Handler::new(networks.clone()).route(&mut router);
-    handlers::utxos::Handler::new(networks.clone()).route(&mut router);
-    handlers::utxos_delta::Handler::new(networks.clone()).route(&mut router);
+    handlers::chain_state::Handler::new(networks.clone()).route(&mut router);
+    handlers::chain_state_delta::Handler::new(networks.clone()).route(&mut router);
     info!("listening to port {}", cfg.port);
     iron::Iron::new(router)
         .http(format!("0.0.0.0:{}", cfg.port))
@@ -54,16 +54,19 @@ fn start_networks_refreshers(cfg: Config) -> Vec<thread::JoinHandle<()>> {
 fn refresh_network(label: &str, net: &Network) {
     info!("Refreshing network {:?}", label);
 
-    let netcfg_file = net.storage.config.get_config_file();
+    let mut storage = net.storage.write().unwrap();
+
+    let netcfg_file = storage.config.get_config_file();
     let net_cfg = net::Config::from_file(&netcfg_file).expect("no network config present");
 
     let genesis_data = {
         let genesis_data = genesis_data::get_genesis_data(&net_cfg.genesis_prev)
             .expect("genesis data not found");
-        parse_genesis_data::parse_genesis_data(genesis_data)
+        parse_genesis_data::parse_genesis_data(genesis_data.as_bytes())
     };
 
+    // FIXME: this locks net.storage for a long time. Maybe we should clone it?
     sync::net_sync(&mut sync::get_peer(&label, &net_cfg, true), &net_cfg,
-                   &genesis_data, &net.storage, false)
+                   &genesis_data, &mut storage, false)
         .unwrap_or_else(|err| { warn!("Sync failed: {:?}", err) });
 }

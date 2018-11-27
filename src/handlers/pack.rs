@@ -45,14 +45,15 @@ impl iron::Handler for Handler {
             return Ok(Response::with(status::BadRequest));
         }
         info!("query pack: {}", packid);
-        let packhash_vec = match tag::read(&net.storage, &packid) {
+        let storage = net.storage.read().unwrap();
+        let packhash_vec = match tag::read(&storage, &packid) {
             None => hex::decode(&packid).unwrap(),
             Some(t) => t
         };
 
         let mut packhash = [0;HASH_SIZE];
         packhash[..].clone_from_slice(packhash_vec.as_slice());
-        let path = net.storage.config.get_pack_filepath(&packhash);
+        let path = storage.config.get_pack_filepath(&packhash);
 
         Ok(Response::with((status::Ok, path)))
     }
