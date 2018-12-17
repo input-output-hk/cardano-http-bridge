@@ -1,4 +1,4 @@
-use cardano::{tx::TxAux};
+use cardano::{block::Verify, tx::TxAux};
 
 use std::{io::Read, sync::Arc};
 
@@ -35,34 +35,33 @@ impl iron::Handler for Handler {
             let base_64 = json.
                 as_object()?.
                 get("signedTx")?.
-                as_str()?.clone();
+                as_str()?;
             let bytes = base64::decode(&base_64).ok()?;
             cbor_event::de::RawCbor::from(&bytes).deserialize_complete().ok()
         }
         let mut req_body_str = String::new();
         req.body.read_to_string(&mut req_body_str).unwrap();
         let txaux = match read_txaux_from_req_str(req_body_str.as_str()) {
-            None => { return Ok(Response::with(status::BadRequest)); }
+            None => { return Ok(Response::with((status::BadRequest, "Invalid input format for transaction"))); }
             Some(x) => x
         };
-
-        println!("Received a valid txauth to send:\n{:?}", txaux);
 
         let (net_name, net) = match common::get_network(req, &self.networks) {
-            None => { return Ok(Response::with(status::BadRequest)); }
+            None => { return Ok(Response::with((status::BadRequest, "Invalid network name"))); }
             Some(x) => x
         };
-
         let netcfg_file = net.storage.config.get_config_file();
         let net_cfg = net::Config::from_file(&netcfg_file).expect("no network config present");
+
+        if let Err(verify_error) = txaux.verify(net_cfg.protocol_magic) {
+            return Ok(Response::with((status::BadRequest, format!("Transaction failed verification: {}", verify_error))));
+        }
+
         let mut peer = sync::get_peer(&net_name, &net_cfg, true);
-
-        println!("found a peer to send from!");
-
-        // match peer.send_transaction(txaux) {
-        //     Err(_) => return Ok(Response::with(status::InternalServerError)),
-        //     Ok(value) => assert!(value)
-        // };
+        match peer.send_transaction(txaux) {
+            Err(e) => return Ok(Response::with((status::InternalServerError, format!("Failed to send to peers: {}", e)))),
+            Ok(value) => assert!(value)
+        };
 
         Ok(Response::with((status::Ok, "Transaction sent successfully!")))
     }
