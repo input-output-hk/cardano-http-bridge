@@ -1,10 +1,7 @@
 # Based on the "trust" template v0.1.2
 # https://github.com/japaric/trust/tree/v0.1.2
 
-dist: trusty
 language: rust
-services: docker
-sudo: required
 
 # TODO Rust builds on stable by default, this can be
 # overridden on a case by case basis down below.
@@ -49,17 +46,33 @@ matrix:
       #- env: TARGET=powerpc64le-unknown-linux-gnu
       #- env: TARGET=s390x-unknown-linux-gnu DISABLE_TESTS=1
     - env: TARGET=x86_64-unknown-linux-gnu
+      dist: trusty
+      sudo: required
+      services: docker
+      if: branch = master
     - env: TARGET=x86_64-unknown-linux-musl
+      sudo: required
+      dist: trusty
+      services: docker
+      if: branch = master
 
     # OSX
     # - env: TARGET=i686-apple-darwin
     #  os: osx
     - env: TARGET=x86_64-apple-darwin
       os: osx
+      services: docker
+      dist: trusty
+      sudo: required
+      if: branch = master
 
     # *BSD
     # - env: TARGET=i686-unknown-freebsd DISABLE_TESTS=1
     - env: TARGET=x86_64-unknown-freebsd DISABLE_TESTS=1
+      services: docker
+      sudo: required
+      dist: trusty
+      if: branch = master
       #- env: TARGET=x86_64-unknown-netbsd DISABLE_TESTS=1
 
     # Windows
@@ -76,8 +89,26 @@ matrix:
     # Testing other channels
     # - env: TARGET=x86_64-unknown-linux-gnu
     #  rust: beta
+    - rust: stable
+      if: branch != master
+      before_install: echo ""
+      install: echo ""
+      script: cargo build && cargo test
+      after_script: echo ""
+      before_deploy: echo ""
+    - rust: nightly
+      if: branch != master
+      before_install: echo ""
+      install: echo ""
+      script: cargo build && cargo test
+      after_script: echo ""
+      before_deploy: echo ""
     - env: TARGET=x86_64-unknown-linux-gnu
+      sudo: required
+      dist: trusty
       rust: nightly
+      services: docker
+      if: branch = master
     # - env: TARGET=x86_64-apple-darwin
     #  os: osx
     #  rust: nightly
