@@ -1,11 +1,16 @@
 use serde_yaml;
 
-use cardano_storage::{self, Storage};
 use cardano_storage::config::StorageConfig;
-use exe_common::config::{net};
-use std::{io, result, path::{PathBuf, Path}, env::{VarError, self, home_dir}};
-use std::{num::{ParseIntError}, collections::{BTreeMap}, sync::{Arc}};
+use cardano_storage::{self, Storage};
+use exe_common::config::net;
 use std::collections::HashSet;
+use std::{collections::BTreeMap, num::ParseIntError, sync::Arc};
+use std::{
+    env::{self, home_dir, VarError},
+    io,
+    path::{Path, PathBuf},
+    result,
+};
 
 #[derive(Debug)]
 pub enum Error {
@@ -14,22 +19,32 @@ pub enum Error {
     YamlError(serde_yaml::Error),
     ParseIntError(ParseIntError),
     StorageError(cardano_storage::Error),
-    BlockchainConfigError(&'static str)
+    BlockchainConfigError(&'static str),
 }
 impl From<VarError> for Error {
-    fn from(e: VarError) -> Error { Error::VarError(e) }
+    fn from(e: VarError) -> Error {
+        Error::VarError(e)
+    }
 }
 impl From<ParseIntError> for Error {
-    fn from(e: ParseIntError) -> Error { Error::ParseIntError(e) }
+    fn from(e: ParseIntError) -> Error {
+        Error::ParseIntError(e)
+    }
 }
 impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Error { Error::IoError(e) }
+    fn from(e: io::Error) -> Error {
+        Error::IoError(e)
+    }
 }
 impl From<cardano_storage::Error> for Error {
-    fn from(e: cardano_storage::Error) -> Error { Error::StorageError(e) }
+    fn from(e: cardano_storage::Error) -> Error {
+        Error::StorageError(e)
+    }
 }
 impl From<serde_yaml::Error> for Error {
-    fn from(e: serde_yaml::Error) -> Error { Error::YamlError(e) }
+    fn from(e: serde_yaml::Error) -> Error {
+        Error::YamlError(e)
+    }
 }
 
 type Result<T> = result::Result<T, Error>;
@@ -60,7 +75,9 @@ impl Config {
         }
     }
 
-    pub fn get_networks_dir(&self) -> PathBuf { self.root_dir.clone() }
+    pub fn get_networks_dir(&self) -> PathBuf {
+        self.root_dir.clone()
+    }
 
     pub fn get_networks(&self) -> Result<Networks> {
         let mut networks = Networks::new();
@@ -71,7 +88,7 @@ impl Config {
             let network = Network {
                 path: netcfg_dir,
                 config: self.get_network_config(name)?,
-                storage: Arc::new(self.get_storage(name)?)
+                storage: Arc::new(self.get_storage(name)?),
             };
 
             networks.insert(name.to_owned(), network);
@@ -85,9 +102,11 @@ impl Config {
         match net::Config::from_file(&path) {
             None => {
                 error!("error while parsing config file: {:?}", path);
-                Err(Error::BlockchainConfigError("error while parsing network config file"))
-            },
-            Some(cfg) => Ok(cfg)
+                Err(Error::BlockchainConfigError(
+                    "error while parsing network config file",
+                ))
+            }
+            Some(cfg) => Ok(cfg),
         }
     }
 
@@ -96,7 +115,7 @@ impl Config {
 
         if netcfg_dir.exists() {
             self.network_names.insert(name.to_string());
-            return Ok(())
+            return Ok(());
         }
 
         let storage_config = self.get_storage_config(name);
@@ -132,7 +151,7 @@ pub type Networks = BTreeMap<String, Network>;
 ///
 /// this will include all the cardano network you will connect to (mainnet, testnet, ...),
 /// the different wallets you will create and all metadata.
-pub static HERMES_PATH_ENV : &'static str = "HERMES_PATH";
+pub static HERMES_PATH_ENV: &'static str = "HERMES_PATH";
 
 /// the home directory hidden directory where to find Hermes files.
 ///
@@ -140,7 +159,7 @@ pub static HERMES_PATH_ENV : &'static str = "HERMES_PATH";
 ///
 /// This is not standard on windows, set the appropriate setting here
 ///
-pub static HERMES_HOME_PATH : &'static str = ".hermes";
+pub static HERMES_HOME_PATH: &'static str = ".hermes";
 
 /// get the root directory of all the hermes path
 ///

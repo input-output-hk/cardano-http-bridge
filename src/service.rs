@@ -1,15 +1,19 @@
-use super::config::{Config, Networks, Network};
-use exe_common::{sync, parse_genesis_data, genesis_data};
+use super::config::{Config, Network, Networks};
 use super::handlers;
+use exe_common::config::net;
+use exe_common::{genesis_data, parse_genesis_data, sync};
 use iron;
 use router::Router;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
-use exe_common::config::net;
 
 pub fn start(cfg: Config) {
-    let _refreshers = if cfg.sync { Some(start_networks_refreshers(cfg.clone())) } else { None };
+    let _refreshers = if cfg.sync {
+        Some(start_networks_refreshers(cfg.clone()))
+    } else {
+        None
+    };
     let _server = start_http_server(&cfg, Arc::new(cfg.get_networks().unwrap()));
 
     // XXX: consider installing a signal handler to initiate a graceful shutdown here
@@ -59,12 +63,17 @@ fn refresh_network(label: &str, net: &Network) {
     let net_cfg = net::Config::from_file(&netcfg_file).expect("no network config present");
 
     let genesis_data = {
-        let genesis_data = genesis_data::get_genesis_data(&net_cfg.genesis_prev)
-            .expect("genesis data not found");
+        let genesis_data =
+            genesis_data::get_genesis_data(&net_cfg.genesis_prev).expect("genesis data not found");
         parse_genesis_data::parse_genesis_data(genesis_data)
     };
 
-    sync::net_sync(&mut sync::get_peer(&label, &net_cfg, true), &net_cfg,
-                   &genesis_data, &net.storage, false)
-        .unwrap_or_else(|err| { warn!("Sync failed: {:?}", err) });
+    sync::net_sync(
+        &mut sync::get_peer(&label, &net_cfg, true),
+        &net_cfg,
+        &genesis_data,
+        &net.storage,
+        false,
+    )
+    .unwrap_or_else(|err| warn!("Sync failed: {:?}", err));
 }
