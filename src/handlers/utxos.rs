@@ -1,4 +1,6 @@
-use cardano_storage::utxo;
+use cardano_storage::chain_state;
+use exe_common::genesis_data;
+use exe_common::genesisdata;
 
 use std::sync::Arc;
 
@@ -19,7 +21,7 @@ impl Handler {
         Handler { networks: networks }
     }
     pub fn route(self, router: &mut Router) -> &mut Router {
-        router.get(":network/utxos/:epochid", self, "utxos")
+        router.get(":network/chain-state/:epochid", self, "chain-state")
     }
 }
 
@@ -34,17 +36,18 @@ impl iron::Handler for Handler {
 
         let mut res = vec![];
 
-        let utxo_state = utxo::get_utxos_for_epoch(&net.storage, epochid).unwrap();
+        let genesis_str = genesis_data::get_genesis_data(&net.config.genesis_prev).unwrap();
+        let genesis_data = genesisdata::parse::parse(genesis_str.as_bytes());
 
-        utxo::write_utxos_delta(
-            &net.storage,
-            &utxo_state.last_block,
-            &utxo_state.last_date,
-            &utxo_state.utxos,
-            None,
-            &mut res,
-        )
-        .unwrap();
+        let last_hdr =
+            &chain_state::get_last_block_of_epoch(&net.storage.read().unwrap(), epochid).unwrap();
+
+        let chain_state =
+            chain_state::read_chain_state(&net.storage.read().unwrap(), &genesis_data, last_hdr)
+                .unwrap();
+
+        chain_state::write_chain_state(&net.storage.read().unwrap(), &genesis_data, &chain_state)
+            .unwrap();
 
         Ok(Response::with((status::Ok, res)))
     }
