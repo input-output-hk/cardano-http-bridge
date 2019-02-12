@@ -25,10 +25,13 @@ impl Handler {
 
 impl iron::Handler for Handler {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
-        let ref network_name = req
+
+        let params = req
             .extensions
             .get::<router::Router>()
-            .unwrap()
+            .unwrap();
+
+        let ref network_name = params
             .find("network")
             .unwrap();
 
@@ -41,12 +44,10 @@ impl iron::Handler for Handler {
             Some(net) => net,
         };
 
-        let ref hash = req
-            .extensions
-            .get::<router::Router>()
-            .unwrap()
+        let ref hash = params
             .find("hash")
             .unwrap();
+
         if !hash
             .chars()
             .all(|c| c.is_ascii_alphanumeric())
