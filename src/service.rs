@@ -1,5 +1,6 @@
 use super::config::{Config, Network, Networks};
 use super::handlers;
+use cardano::config::GenesisData;
 use exe_common::config::net;
 use exe_common::{genesis_data, parse_genesis_data, sync};
 use iron;
@@ -43,8 +44,15 @@ fn start_networks_refreshers(cfg: Config) -> Vec<thread::JoinHandle<()>> {
         Ok(networks) => {
             for (label, net) in networks.into_iter() {
                 threads.push(thread::spawn(move || {
+                    let netcfg_file = net.storage.config.get_config_file();
+                    let net_cfg = net::Config::from_file(&netcfg_file).expect("no network config present");
+                    let genesis_data = {
+                        let genesis_data =
+                            genesis_data::get_genesis_data(&net_cfg.genesis_prev).expect("genesis data not found");
+                        parse_genesis_data::parse_genesis_data(genesis_data)
+                    };
                     loop {
-                        refresh_network(&label, &net);
+                        refresh_network(&label, &net, &net_cfg, &genesis_data);
                         // In case of an error, wait a while before retrying.
                         thread::sleep(Duration::from_secs(10));
                     }
@@ -56,22 +64,12 @@ fn start_networks_refreshers(cfg: Config) -> Vec<thread::JoinHandle<()>> {
 }
 
 // XXX: how do we want to report partial failures?
-fn refresh_network(label: &str, net: &Network) {
+fn refresh_network(label: &str, net: &Network, net_cfg: &super::net::Config, genesis_data: &GenesisData) {
     info!("Refreshing network {:?}", label);
-
-    let netcfg_file = net.storage.config.get_config_file();
-    let net_cfg = net::Config::from_file(&netcfg_file).expect("no network config present");
-
-    let genesis_data = {
-        let genesis_data =
-            genesis_data::get_genesis_data(&net_cfg.genesis_prev).expect("genesis data not found");
-        parse_genesis_data::parse_genesis_data(genesis_data)
-    };
-
     sync::net_sync(
-        &mut sync::get_peer(&label, &net_cfg, true),
-        &net_cfg,
-        &genesis_data,
+        &mut sync::get_peer(&label, net_cfg, true),
+        net_cfg,
+        genesis_data,
         &net.storage,
         false,
     )
