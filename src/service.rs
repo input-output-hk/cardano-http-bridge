@@ -23,6 +23,7 @@ pub fn start(cfg: Config) {
 fn start_http_server(cfg: &Config, networks: Arc<Networks>) -> iron::Listening {
     let mut router = Router::new();
     handlers::block::Handler::new(networks.clone()).route(&mut router);
+    handlers::genesis::Handler::new(networks.clone()).route(&mut router);
     handlers::pack::Handler::new(networks.clone()).route(&mut router);
     handlers::epoch::Handler::new(networks.clone()).route(&mut router);
     handlers::tip::Handler::new(networks.clone()).route(&mut router);

@@ -51,7 +51,7 @@ impl iron::Handler for Handler {
             .unwrap();
         if !blockid
             .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '_')
+            .all(|c| c.is_ascii_alphanumeric())
         {
             error!("invalid blockid: {}", blockid);
             return Ok(Response::with(status::BadRequest));
