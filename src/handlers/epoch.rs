@@ -32,13 +32,18 @@ impl iron::Handler for Handler {
             Some(x) => x,
         };
 
-        let opackref = epoch::epoch_read_pack(&net.storage.config, epochid);
+        let opackref = epoch::epoch_read_pack(&net.storage.read().unwrap().config, epochid);
         match opackref {
             Err(_) => {
                 return Ok(Response::with(status::NotFound));
             }
             Ok(packref) => {
-                let path = net.storage.config.get_pack_filepath(&packref);
+                let path = net
+                    .storage
+                    .read()
+                    .unwrap()
+                    .config
+                    .get_pack_filepath(&packref);
                 Ok(Response::with((status::Ok, path)))
             }
         }

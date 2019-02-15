@@ -32,9 +32,8 @@ impl iron::Handler for Handler {
             let json = serde_json::from_str::<serde_json::Value>(tx_str).ok()?;
             let base_64 = json.as_object()?.get("signedTx")?.as_str()?;
             let bytes = base64::decode(&base_64).ok()?;
-            cbor_event::de::RawCbor::from(&bytes)
-                .deserialize_complete()
-                .ok()
+            let mut de = cbor_event::de::Deserializer::from(std::io::Cursor::new(&bytes));
+            de.deserialize_complete().ok()
         }
         let mut req_body_str = String::new();
         req.body.read_to_string(&mut req_body_str).unwrap();
@@ -54,7 +53,7 @@ impl iron::Handler for Handler {
             }
             Some(x) => x,
         };
-        let netcfg_file = net.storage.config.get_config_file();
+        let netcfg_file = net.storage.read().unwrap().config.get_config_file();
         let net_cfg = net::Config::from_file(&netcfg_file).expect("no network config present");
 
         if let Err(verify_error) = txaux.verify(net_cfg.protocol_magic) {
