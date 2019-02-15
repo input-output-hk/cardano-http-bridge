@@ -1,4 +1,5 @@
 pub mod block;
+pub mod genesis;
 pub mod common;
 pub mod epoch;
 pub mod pack;
