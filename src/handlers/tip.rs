@@ -44,7 +44,7 @@ impl iron::Handler for Handler {
             Some(net) => net,
         };
 
-        match net.storage.get_block_from_tag(&tag::HEAD) {
+        match net.storage.read().unwrap().get_block_from_tag(&tag::HEAD) {
             Err(Error::NoSuchTag) => Ok(Response::with((status::NotFound, "No Tip To Serve"))),
             Err(err) => {
                 error!("error while reading block: {:?}", err);
@@ -52,7 +52,7 @@ impl iron::Handler for Handler {
             }
             Ok(block) => Ok(Response::with((
                 status::Ok,
-                block.get_header().to_raw().as_ref(),
+                block.header().to_raw().as_ref(),
             ))),
         }
     }

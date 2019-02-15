@@ -4,7 +4,7 @@ use cardano_storage::config::StorageConfig;
 use cardano_storage::{self, Storage};
 use exe_common::config::net;
 use std::collections::HashSet;
-use std::{collections::BTreeMap, num::ParseIntError, sync::Arc};
+use std::{collections::BTreeMap, num::ParseIntError, sync::Arc, sync::RwLock};
 use std::{
     env::{self, home_dir, VarError},
     io,
@@ -88,7 +88,7 @@ impl Config {
             let network = Network {
                 path: netcfg_dir,
                 config: self.get_network_config(name)?,
-                storage: Arc::new(self.get_storage(name)?),
+                storage: Arc::new(RwLock::new(self.get_storage(name)?)),
             };
 
             networks.insert(name.to_owned(), network);
@@ -142,8 +142,26 @@ impl Config {
 pub struct Network {
     pub path: PathBuf,
     pub config: net::Config,
-    pub storage: Arc<cardano_storage::Storage>,
+    pub storage: Arc<RwLock<cardano_storage::Storage>>,
 }
+
+/*
+impl Network {
+    pub fn read_storage_config<'a>(&'a self) -> &'a StorageConfig {
+        let r = self.storage.read().unwrap();
+        let cfg = &r.config;
+        &cfg
+    }
+
+    pub fn with_ro_storage(&self) -> &Storage {
+        &self.storage.read().unwrap()
+    }
+
+    pub fn with_rw_storage(&self) -> &mut Storage {
+        &mut self.storage.write().unwrap()
+    }
+}
+*/
 
 pub type Networks = BTreeMap<String, Network>;
 

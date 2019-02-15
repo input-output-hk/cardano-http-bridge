@@ -1,7 +1,7 @@
 use super::super::config::Networks;
 use cardano::block;
 use cardano::util::{hex, try_from_slice::TryFromSlice};
-use cardano_storage::{block_location, block_read_location, tag};
+use cardano_storage::tag;
 use std::sync::Arc;
 
 use iron;
@@ -56,26 +56,30 @@ impl iron::Handler for Handler {
             error!("invalid blockid: {}", blockid);
             return Ok(Response::with(status::BadRequest));
         }
-        let hh_bytes = match tag::read(&net.storage, &blockid) {
+        let hh_bytes = match tag::read(&net.storage.read().unwrap(), &blockid) {
             None => hex::decode(&blockid).unwrap(),
             Some(t) => t,
         };
         let hh = block::HeaderHash::try_from_slice(&hh_bytes).expect("blockid invalid");
         info!("querying block header: {}", hh);
 
-        match block_location(&net.storage, &hh.clone().into()) {
-            None => {
+        match &(net.storage)
+            .read()
+            .unwrap()
+            .block_location(&hh.clone().into())
+        {
+            Err(_) => {
                 warn!("block `{}' does not exist", hh);
                 Ok(Response::with((status::NotFound, "Not Found")))
             }
-            Some(loc) => {
+            Ok(loc) => {
                 debug!("blk location: {:?}", loc);
-                match block_read_location(&net.storage, &loc, &hh.into()) {
-                    None => {
+                match net.storage.read().unwrap().read_block_at(&loc) {
+                    Err(_) => {
                         error!("error while reading block at location: {:?}", loc);
                         Ok(Response::with(status::InternalServerError))
                     }
-                    Some(rblk) => Ok(Response::with((status::Ok, rblk.as_ref()))),
+                    Ok(rblk) => Ok(Response::with((status::Ok, rblk.as_ref()))),
                 }
             }
         }
