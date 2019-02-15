@@ -1,7 +1,7 @@
 use std::{str::FromStr, sync::Arc};
 
 use cardano::block;
-use exe_common::genesis_data;
+use exe_common::genesisdata;
 use iron;
 use iron::{IronResult, Request, Response};
 use iron::status;
@@ -66,7 +66,7 @@ impl iron::Handler for Handler {
 
         info!("Searching genesis: {}", header_hash);
         let genesis_data =
-            genesis_data::get_genesis_data(&header_hash);
+            genesisdata::data::get_genesis_data(&header_hash);
 
         match genesis_data {
             Err(hh) => {

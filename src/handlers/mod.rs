@@ -1,4 +1,6 @@
+pub mod height;
 pub mod block;
+pub mod block_by_height;
 pub mod genesis;
 pub mod common;
 pub mod epoch;

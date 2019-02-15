@@ -2,7 +2,7 @@ use super::config::{Config, Network, Networks};
 use super::handlers;
 use exe_common::config::net;
 use exe_common::genesisdata;
-use exe_common::{genesis_data, sync};
+use exe_common::sync;
 use iron;
 use router::Router;
 use std::sync::Arc;
@@ -23,7 +23,9 @@ pub fn start(cfg: Config) {
 
 fn start_http_server(cfg: &Config, networks: Arc<Networks>) -> iron::Listening {
     let mut router = Router::new();
+    handlers::height::Handler::new(networks.clone()).route(&mut router);
     handlers::block::Handler::new(networks.clone()).route(&mut router);
+    handlers::block_by_height::Handler::new(networks.clone()).route(&mut router);
     handlers::genesis::Handler::new(networks.clone()).route(&mut router);
     handlers::pack::Handler::new(networks.clone()).route(&mut router);
     handlers::epoch::Handler::new(networks.clone()).route(&mut router);
@@ -66,7 +68,7 @@ fn refresh_network(label: &str, net: &mut Network) {
 
     let genesis_data = {
         let genesis_data =
-            genesis_data::get_genesis_data(&net_cfg.genesis_prev).expect("genesis data not found");
+            genesisdata::data::get_genesis_data(&net_cfg.genesis_prev).expect("genesis data not found");
         genesisdata::parse::parse(genesis_data.as_bytes())
     };
 
