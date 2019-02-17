@@ -1,7 +1,4 @@
 use super::super::config::Networks;
-use cardano::block;
-use cardano::util::{hex, try_from_slice::TryFromSlice};
-use cardano_storage::tag;
 use std::sync::Arc;
 
 use iron;
