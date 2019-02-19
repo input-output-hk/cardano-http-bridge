@@ -36,7 +36,7 @@ impl iron::Handler for Handler {
         let (height, date, hash) = match &net.storage.read().unwrap().get_block_from_tag(tag::HEAD) {
             Ok(b) => (
                 u64::from(b.header().difficulty()),
-                match b.header().blockdate().get_epoch_and_slot() {
+                match b.header().blockdate().epoch_and_slot() {
                     (e, b) => (Some(e), b)
                 },
                 hex::encode(&header_to_blockhash(&b.header().compute_hash())),
