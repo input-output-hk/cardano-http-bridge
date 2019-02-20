@@ -1,5 +1,4 @@
 use cardano_storage::chain_state;
-use exe_common::genesis_data;
 use exe_common::genesisdata;
 
 use std::sync::Arc;
@@ -36,7 +35,7 @@ impl iron::Handler for Handler {
 
         let mut res = vec![];
 
-        let genesis_str = genesis_data::get_genesis_data(&net.config.genesis_prev).unwrap();
+        let genesis_str = genesisdata::data::get_genesis_data(&net.config.genesis_prev).unwrap();
         let genesis_data = genesisdata::parse::parse(genesis_str.as_bytes());
 
         let last_hdr =
