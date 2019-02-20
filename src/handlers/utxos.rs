@@ -1,5 +1,5 @@
 use cardano_storage::chain_state;
-use exe_common::genesisdata;
+use exe_common::{genesisdata, sync};
 
 use std::sync::Arc;
 
@@ -33,20 +33,23 @@ impl iron::Handler for Handler {
             Some(x) => x,
         };
 
-        let mut res = vec![];
-
         let genesis_str = genesisdata::data::get_genesis_data(&net.config.genesis_prev).unwrap();
         let genesis_data = genesisdata::parse::parse(genesis_str.as_bytes());
 
-        let last_hdr =
-            &chain_state::get_last_block_of_epoch(&net.storage.read().unwrap(), epochid).unwrap();
+        let storage = net.storage.read().unwrap();
 
         let chain_state =
-            chain_state::read_chain_state(&net.storage.read().unwrap(), &genesis_data, last_hdr)
-                .unwrap();
+            sync::get_chain_state_at_end_of(&storage, epochid, &genesis_data).unwrap();
 
-        chain_state::write_chain_state(&net.storage.read().unwrap(), &genesis_data, &chain_state)
-            .unwrap();
+        let mut res = vec![];
+        chain_state::write_chain_state_delta(
+            &storage,
+            &genesis_data,
+            &chain_state,
+            &net.config.genesis_prev,
+            &mut res,
+        )
+        .unwrap();
 
         Ok(Response::with((status::Ok, res)))
     }
