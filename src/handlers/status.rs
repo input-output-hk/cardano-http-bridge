@@ -1,6 +1,6 @@
 use super::super::config::Networks;
 use cardano::util::hex;
-use cardano_storage::{tag, Error, types::header_to_blockhash};
+use cardano_storage::{tag, types::header_to_blockhash, Error};
 use std::sync::Arc;
 
 use iron;
@@ -27,24 +27,24 @@ impl Handler {
 
 impl iron::Handler for Handler {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
-
         let net = match common::get_network(req, &self.networks) {
             None => return Ok(Response::with(status::BadRequest)),
-            Some((_, n)) => n
+            Some((_, n)) => n,
         };
 
-        let (height, date, hash) = match &net.storage.read().unwrap().get_block_from_tag(tag::HEAD) {
+        let (height, date, hash) = match &net.storage.read().unwrap().get_block_from_tag(tag::HEAD)
+        {
             Ok(b) => (
                 u64::from(b.header().difficulty()),
                 match b.header().blockdate().epoch_and_slot() {
-                    (e, b) => (Some(e), b)
+                    (e, b) => (Some(e), b),
                 },
                 hex::encode(&header_to_blockhash(&b.header().compute_hash())),
             ),
             Err(Error::NoSuchTag) => (0 as u64, (None, None), String::new()),
             Err(err) => {
                 error!("error while reading difficutly from HEAD: {:?}", err);
-                return Ok(Response::with(status::InternalServerError))
+                return Ok(Response::with(status::InternalServerError));
             }
         };
 

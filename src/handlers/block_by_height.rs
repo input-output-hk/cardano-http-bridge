@@ -24,35 +24,26 @@ impl Handler {
 
 impl iron::Handler for Handler {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
-
-        let params = req
-            .extensions
-            .get::<router::Router>()
-            .unwrap();
+        let params = req.extensions.get::<router::Router>().unwrap();
 
         let net = match common::get_network(req, &self.networks) {
             None => return Ok(Response::with(status::BadRequest)),
-            Some((_, net)) => net
+            Some((_, net)) => net,
         };
 
-        let ref height_str = params
-            .find("height")
-            .unwrap();
+        let ref height_str = params.find("height").unwrap();
 
-        if !height_str
-            .chars()
-            .all(|c| c.is_numeric())
-        {
+        if !height_str.chars().all(|c| c.is_numeric()) {
             error!("invalid block height: {}", height_str);
             return Ok(Response::with(status::BadRequest));
         }
 
-        let height = height_str.parse::<u64>()
+        let height = height_str
+            .parse::<u64>()
             .expect(&format!("Failed to parse block height: {}", height_str));
 
         let storage = &(net.storage).read().unwrap();
-        match storage.block_location_by_height(height)
-        {
+        match storage.block_location_by_height(height) {
             Err(_) => {
                 warn!("block with height `{}' does not exist", height);
                 Ok(Response::with((status::NotFound, "Not Found")))
