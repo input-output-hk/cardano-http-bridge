@@ -28,8 +28,8 @@ fn start_http_server(cfg: &Config, networks: Arc<Networks>) -> iron::Listening {
     handlers::epoch::Handler::new(networks.clone()).route(&mut router);
     handlers::tip::Handler::new(networks.clone()).route(&mut router);
     handlers::tx::Handler::new(networks.clone()).route(&mut router);
-    handlers::utxos::Handler::new(networks.clone()).route(&mut router);
-    handlers::utxos_delta::Handler::new(networks.clone()).route(&mut router);
+    handlers::chain_state::Handler::new(networks.clone()).route(&mut router);
+    handlers::chain_state_delta::Handler::new(networks.clone()).route(&mut router);
     info!("listening to port {}", cfg.port);
     iron::Iron::new(router)
         .http(format!("0.0.0.0:{}", cfg.port))
