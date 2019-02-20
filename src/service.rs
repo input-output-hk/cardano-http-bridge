@@ -1,8 +1,7 @@
 use super::config::{Config, Network, Networks};
 use super::handlers;
 use exe_common::config::net;
-use exe_common::genesisdata;
-use exe_common::{genesis_data, sync};
+use exe_common::{genesisdata, sync};
 use iron;
 use router::Router;
 use std::sync::Arc;
@@ -65,8 +64,8 @@ fn refresh_network(label: &str, net: &mut Network) {
     let net_cfg = net::Config::from_file(&netcfg_file).expect("no network config present");
 
     let genesis_data = {
-        let genesis_data =
-            genesis_data::get_genesis_data(&net_cfg.genesis_prev).expect("genesis data not found");
+        let genesis_data = genesisdata::data::get_genesis_data(&net_cfg.genesis_prev)
+            .expect("genesis data not found");
         genesisdata::parse::parse(genesis_data.as_bytes())
     };
 
