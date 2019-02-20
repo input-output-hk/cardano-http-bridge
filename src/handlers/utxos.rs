@@ -38,8 +38,8 @@ impl iron::Handler for Handler {
 
         let storage = net.storage.read().unwrap();
 
-        let chain_state = sync::get_chain_state_at_end_of(
-            &storage, epochid, &genesis_data).unwrap();
+        let chain_state =
+            sync::get_chain_state_at_end_of(&storage, epochid, &genesis_data).unwrap();
 
         let mut res = vec![];
         chain_state::write_chain_state_delta(
@@ -47,7 +47,9 @@ impl iron::Handler for Handler {
             &genesis_data,
             &chain_state,
             &net.config.genesis_prev,
-            &mut res).unwrap();
+            &mut res,
+        )
+        .unwrap();
 
         Ok(Response::with((status::Ok, res)))
     }

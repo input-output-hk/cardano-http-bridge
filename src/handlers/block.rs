@@ -27,15 +27,9 @@ impl Handler {
 
 impl iron::Handler for Handler {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
+        let params = req.extensions.get::<router::Router>().unwrap();
 
-        let params = req
-            .extensions
-            .get::<router::Router>()
-            .unwrap();
-
-        let ref network_name = params
-            .find("network")
-            .unwrap();
+        let ref network_name = params.find("network").unwrap();
 
         if !common::validate_network_name(network_name) {
             return Ok(Response::with(status::BadRequest));
@@ -46,14 +40,9 @@ impl iron::Handler for Handler {
             Some(net) => net,
         };
 
-        let ref blockid = params
-            .find("blockid")
-            .unwrap();
+        let ref blockid = params.find("blockid").unwrap();
 
-        if !blockid
-            .chars()
-            .all(|c| c.is_ascii_alphanumeric())
-        {
+        if !blockid.chars().all(|c| c.is_ascii_alphanumeric()) {
             error!("invalid blockid: {}", blockid);
             return Ok(Response::with(status::BadRequest));
         }

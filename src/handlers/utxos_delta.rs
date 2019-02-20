@@ -48,8 +48,7 @@ impl iron::Handler for Handler {
 
         let from_block = chain_state::get_last_block_of_epoch(&storage, from).unwrap();
 
-        let to_state = sync::get_chain_state_at_end_of(
-            &storage, to, &genesis_data).unwrap();
+        let to_state = sync::get_chain_state_at_end_of(&storage, to, &genesis_data).unwrap();
 
         let mut res = vec![];
         chain_state::write_chain_state_delta(
@@ -57,7 +56,9 @@ impl iron::Handler for Handler {
             &genesis_data,
             &to_state,
             &from_block,
-            &mut res).unwrap();
+            &mut res,
+        )
+        .unwrap();
 
         Ok(Response::with((status::Ok, res)))
     }
