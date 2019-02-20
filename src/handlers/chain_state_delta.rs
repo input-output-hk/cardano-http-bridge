@@ -1,5 +1,5 @@
 use cardano_storage::chain_state;
-use exe_common::genesisdata;
+use exe_common::{genesisdata, sync};
 
 use std::sync::Arc;
 
@@ -41,20 +41,24 @@ impl iron::Handler for Handler {
             common::validate_epochid(&req.extensions.get::<Router>().unwrap().find("to").unwrap())
                 .unwrap();
 
-        let mut res = vec![];
-
         let genesis_str = genesisdata::data::get_genesis_data(&net.config.genesis_prev).unwrap();
         let genesis_data = genesisdata::parse::parse(genesis_str.as_bytes());
 
-        let last_hdr =
-            &chain_state::get_last_block_of_epoch(&net.storage.read().unwrap(), from).unwrap();
+        let storage = net.storage.read().unwrap();
 
-        let chain_state =
-            chain_state::read_chain_state(&net.storage.read().unwrap(), &genesis_data, last_hdr)
-                .unwrap();
+        let from_block = chain_state::get_last_block_of_epoch(&storage, from).unwrap();
 
-        chain_state::write_chain_state(&net.storage.read().unwrap(), &genesis_data, &chain_state)
-            .unwrap();
+        let to_state = sync::get_chain_state_at_end_of(&storage, to, &genesis_data).unwrap();
+
+        let mut res = vec![];
+        chain_state::write_chain_state_delta(
+            &storage,
+            &genesis_data,
+            &to_state,
+            &from_block,
+            &mut res,
+        )
+        .unwrap();
 
         Ok(Response::with((status::Ok, res)))
     }

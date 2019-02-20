@@ -1,8 +1,7 @@
 use super::config::{Config, Network, Networks};
 use super::handlers;
 use exe_common::config::net;
-use exe_common::genesisdata;
-use exe_common::sync;
+use exe_common::{genesisdata, sync};
 use iron;
 use router::Router;
 use std::sync::Arc;
@@ -31,8 +30,8 @@ fn start_http_server(cfg: &Config, networks: Arc<Networks>) -> iron::Listening {
     handlers::epoch::Handler::new(networks.clone()).route(&mut router);
     handlers::tip::Handler::new(networks.clone()).route(&mut router);
     handlers::tx::Handler::new(networks.clone()).route(&mut router);
-    handlers::utxos::Handler::new(networks.clone()).route(&mut router);
-    handlers::utxos_delta::Handler::new(networks.clone()).route(&mut router);
+    handlers::chain_state::Handler::new(networks.clone()).route(&mut router);
+    handlers::chain_state_delta::Handler::new(networks.clone()).route(&mut router);
     info!("listening to port {}", cfg.port);
     iron::Iron::new(router)
         .http(format!("0.0.0.0:{}", cfg.port))
@@ -67,8 +66,8 @@ fn refresh_network(label: &str, net: &mut Network) {
     let net_cfg = net::Config::from_file(&netcfg_file).expect("no network config present");
 
     let genesis_data = {
-        let genesis_data =
-            genesisdata::data::get_genesis_data(&net_cfg.genesis_prev).expect("genesis data not found");
+        let genesis_data = genesisdata::data::get_genesis_data(&net_cfg.genesis_prev)
+            .expect("genesis data not found");
         genesisdata::parse::parse(genesis_data.as_bytes())
     };
 
