@@ -9,12 +9,16 @@ use std::thread;
 use std::time::Duration;
 
 pub fn start(cfg: Config) {
+    let networks = Arc::new(match cfg.get_networks() {
+        Err(err) => panic!("Unable to get networks: {:?}", err),
+        Ok(nets) => nets,
+    });
     let _refreshers = if cfg.sync {
-        Some(start_networks_refreshers(cfg.clone()))
+        Some(start_networks_refreshers(networks.clone()))
     } else {
         None
     };
-    let _server = start_http_server(&cfg, Arc::new(cfg.get_networks().unwrap()));
+    let _server = start_http_server(&cfg, networks);
 
     // XXX: consider installing a signal handler to initiate a graceful shutdown here
     // XXX: after initiating shutdown, do `refresher.join()` and something similar for `server`.
@@ -37,21 +41,18 @@ fn start_http_server(cfg: &Config, networks: Arc<Networks>) -> iron::Listening {
 }
 
 // TODO: make this a struct which receives a shutdown message on a channel and then wraps itself up
-fn start_networks_refreshers(cfg: Config) -> Vec<thread::JoinHandle<()>> {
+fn start_networks_refreshers(networks: Arc<Networks>) -> Vec<thread::JoinHandle<()>> {
     let mut threads = vec![];
-    match cfg.get_networks() {
-        Err(err) => panic!("Unable to get networks: {:?}", err),
-        Ok(networks) => {
-            for (label, mut net) in networks.into_iter() {
-                threads.push(thread::spawn(move || {
-                    loop {
-                        refresh_network(&label, &mut net);
-                        // In case of an error, wait a while before retrying.
-                        thread::sleep(Duration::from_secs(10));
-                    }
-                }));
+    for (label, net) in networks.iter() {
+        let label = label.to_owned();
+        let mut net = net.clone();
+        threads.push(thread::spawn(move || {
+            loop {
+                refresh_network(&label, &mut net);
+                // In case of an error, wait a while before retrying.
+                thread::sleep(Duration::from_secs(10));
             }
-        }
+        }));
     }
     threads
 }
@@ -73,7 +74,7 @@ fn refresh_network(label: &str, net: &mut Network) {
         &mut sync::get_peer(&label, &net_cfg, true),
         &net_cfg,
         &genesis_data,
-        &mut net.storage.write().unwrap(),
+        net.storage.clone(),
         false,
     )
     .unwrap_or_else(|err| warn!("Sync failed: {:?}", err));
