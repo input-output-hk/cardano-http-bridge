@@ -139,6 +139,7 @@ impl Config {
     }
 }
 
+#[derive(Clone)]
 pub struct Network {
     pub path: PathBuf,
     pub config: net::Config,
