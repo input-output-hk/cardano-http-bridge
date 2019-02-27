@@ -15,7 +15,8 @@ And to post transactions
 # How to build
 
 1. you need to [install the rust toolchain](https://www.rust-lang.org/tools/install);
-2. you need to build the project: `cargo run --release`
+2. you need to update git submodules: `git submodule update --init`
+3. you need to build the project: `cargo run --release`
 
 # How to start a new http bridge instance
 
