@@ -14,10 +14,7 @@ extern crate cardano;
 extern crate cardano_storage;
 extern crate exe_common;
 
-use std::path::{
-    PathBuf,
-    Path,
-};
+use std::path::{Path, PathBuf};
 
 mod config;
 mod handlers;
@@ -65,7 +62,7 @@ fn main() {
                         .help("either 'mainnet' or 'testnet'; may be given multiple times")
                         .required(false)
                         .multiple(true)
-                        .default_value("mainnet")
+                        .default_value("mainnet"),
                 )
                 .arg(
                     Arg::with_name("no-sync")
@@ -99,7 +96,7 @@ fn main() {
                     "mainnet" => net::Config::mainnet(),
                     "staging" => net::Config::staging(),
                     "testnet" => net::Config::testnet(),
-                    filepath  => {
+                    filepath => {
                         let path = Path::new(filepath);
                         match net::Config::from_file(path) {
                             None => panic!("unknown or missing template '{}'", template),
