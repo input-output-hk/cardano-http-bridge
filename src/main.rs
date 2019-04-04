@@ -14,7 +14,10 @@ extern crate cardano;
 extern crate cardano_storage;
 extern crate exe_common;
 
-use std::path::PathBuf;
+use std::path::{
+    PathBuf,
+    Path,
+};
 
 mod config;
 mod handlers;
@@ -63,7 +66,6 @@ fn main() {
                         .required(false)
                         .multiple(true)
                         .default_value("mainnet")
-                        .possible_values(&["mainnet", "staging", "testnet"]),
                 )
                 .arg(
                     Arg::with_name("no-sync")
@@ -97,11 +99,12 @@ fn main() {
                     "mainnet" => net::Config::mainnet(),
                     "staging" => net::Config::staging(),
                     "testnet" => net::Config::testnet(),
-                    _ => {
-                        // we do not support custom template yet.
-                        // in the mean while the error is handled by clap
-                        // (possible_values)
-                        panic!("unknown template '{}'", template)
+                    filepath  => {
+                        let path = Path::new(filepath);
+                        match net::Config::from_file(path) {
+                            None => panic!("unknown or missing template '{}'", template),
+                            Some(cfg) => cfg,
+                        }
                     }
                 };
 
