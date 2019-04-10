@@ -7,3 +7,4 @@ pub mod genesis;
 pub mod pack;
 pub mod tip;
 pub mod tx;
+pub mod utxos;
