@@ -89,6 +89,31 @@ disseminated to the different nodes it knows of:
 
 The body of the request is the base64 encoded signed transaction.
 
+## GET: `/:network/utxos/:address`
+
+Allows you to query utxos in JSON format given:
+
+* `:network` is any of the network passed to the `--template` options at startup.
+* `:address` base58 encoding of an address
+
+Example query:
+
+```
+curl http://localhost:8080/mainnet/utxos/2cWKMJemoBamE3kYCuVLq6pwWwNBJVZmv471Zcb2ok8cH9NjJC4JUkq5rV5ss9ALXWCKN
+```
+
+Possible response:
+```json
+[
+    {
+        "address": "2cWKMJemoBamE3kYCuVLq6pwWwNBJVZmv471Zcb2ok8cH9NjJC4JUkq5rV5ss9ALXWCKN",
+        "coin": 310025,
+        "index": 0,
+        "txid": "89eb0d6a8a691dae2cd15ed0369931ce0a949ecafa5c3f93f8121833646e15c3"
+    }
+]
+```
+
 ## GET: `/:network/chain-state/:epochid`
 
 ## GET: `/:network/chain-state-delta/:epochid/:to`
