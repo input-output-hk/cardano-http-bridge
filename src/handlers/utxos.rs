@@ -1,7 +1,3 @@
-use cardano_storage::{chain_state, tag, Error};
-use exe_common::network::BlockRef;
-use exe_common::{genesisdata, sync};
-
 use std::sync::Arc;
 
 use iron;
@@ -18,9 +14,10 @@ use std::str::FromStr;
 pub struct Handler {
     networks: Arc<Networks>,
 }
+
 impl Handler {
     pub fn new(networks: Arc<Networks>) -> Self {
-        Handler { networks: networks }
+        Handler { networks }
     }
     pub fn route(self, router: &mut Router) -> &mut Router {
         router.get(":network/utxos/:address", self, "utxos")
@@ -47,36 +44,12 @@ impl iron::Handler for Handler {
         let params = req.extensions.get::<router::Router>().unwrap();
         let address = params.find("address").unwrap();
 
-        let genesis_str = genesisdata::data::get_genesis_data(&net.config.genesis_prev).unwrap();
-        let genesis_data = genesisdata::parse::parse(genesis_str.as_bytes());
-
-        let storage = net.storage.read().unwrap();
-
-        let tip = match net.storage.read().unwrap().get_block_from_tag(&tag::HEAD) {
-            Err(Error::NoSuchTag) => {
-                return Ok(Response::with((status::NotFound, "No Tip To Serve")));
-            }
-            Err(err) => {
-                error!("error while reading block: {:?}", err);
-                return Ok(Response::with(status::InternalServerError));
-            }
-            Ok(block) => {
-                let header = block.header();
-                BlockRef {
-                    hash: header.compute_hash(),
-                    parent: header.previous_header(),
-                    date: header.blockdate(),
-                }
-            }
-        };
-
-        let chain_state =
-            chain_state::restore_chain_state(&storage, &genesis_data, &tip.hash).unwrap();
-
         let filter_address = match cardano::address::ExtendedAddr::from_str(&address) {
             Ok(addr) => addr,
             Err(_) => return Ok(Response::with((status::BadRequest, "Invalid address"))),
         };
+
+        let chain_state = net.shared_chain_state.read();
 
         let utxos = utxos_by_address(&chain_state.utxos, &filter_address);
 
@@ -120,7 +93,7 @@ mod tests {
     use std::collections::BTreeMap;
 
     static BASE58_ADDRESS : &str = "DdzFFzCqrhsjcfsReoiHddtt3ih6YusHbNXMTAjCvi5vakqk6sHkXDbMkaYgAbZyiy6hNK4761cF33AaCog93vbwgXGEXKgmA52dhrhJ";
-    static BYTES : [u8; 32] = [0u8; 32];
+    static BYTES: [u8; 32] = [0u8; 32];
 
     #[test]
     fn filter_existent_address() {
