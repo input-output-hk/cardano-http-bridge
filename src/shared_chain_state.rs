@@ -100,9 +100,11 @@ impl SharedChainState {
 
         //Find all the new blocks
         while cursor != current_state.last_block {
+            //I'm not sure there is something to do on this error
             let block = Self::read_block(&cursor, storage).unwrap();
             let previous = block.header().previous_header();
-            //I'm not sure if I should store the block or only the hashes
+            // As this should be called frequently,
+            // I don't think storing the blocks should be a problem memorywise
             blocks_to_apply.push(block);
             cursor = previous;
         }

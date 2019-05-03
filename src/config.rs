@@ -12,6 +12,8 @@ use std::{
     result,
 };
 
+use super::shared_chain_state;
+
 #[derive(Debug)]
 pub enum Error {
     IoError(io::Error),
@@ -82,13 +84,23 @@ impl Config {
     pub fn get_networks(&self) -> Result<Networks> {
         let mut networks = Networks::new();
 
+        use shared_chain_state::SharedChainState;
+
         for name in &self.network_names {
             let netcfg_dir = self.get_networks_dir().join(name);
 
+            let netcfg = self.get_network_config(name)?;
+            let storage = Arc::new(RwLock::new(self.get_storage(name)?));
+
+            //This could slow the startup a bit, but is is the simpler way
+            let shared_chain_state =
+                SharedChainState::from_storage(storage.clone(), &netcfg).unwrap();
+
             let network = Network {
                 path: netcfg_dir,
-                config: self.get_network_config(name)?,
-                storage: Arc::new(RwLock::new(self.get_storage(name)?)),
+                config: netcfg,
+                storage: storage,
+                shared_chain_state: Arc::new(shared_chain_state),
             };
 
             networks.insert(name.to_owned(), network);
@@ -144,6 +156,7 @@ pub struct Network {
     pub path: PathBuf,
     pub config: net::Config,
     pub storage: Arc<RwLock<cardano_storage::Storage>>,
+    pub shared_chain_state: Arc<shared_chain_state::SharedChainState>,
 }
 
 /*
