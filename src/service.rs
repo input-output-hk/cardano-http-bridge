@@ -4,9 +4,18 @@ use exe_common::config::net;
 use exe_common::{genesisdata, sync};
 use iron;
 use router::Router;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
+
+use std::sync::mpsc::{channel, Sender};
+
+use cardano::config::GenesisData;
+use cardano_storage::Storage;
+use exe_common::network::Api;
+use exe_common::network::Peer;
+
+use super::shared_chain_state;
 
 pub fn start(cfg: Config) {
     let networks = Arc::new(match cfg.get_networks() {
@@ -18,6 +27,7 @@ pub fn start(cfg: Config) {
     } else {
         None
     };
+
     let _server = start_http_server(&cfg, networks);
 
     // XXX: consider installing a signal handler to initiate a graceful shutdown here
@@ -71,12 +81,37 @@ fn refresh_network(label: &str, net: &mut Network) {
         genesisdata::parse::parse(genesis_data.as_bytes())
     };
 
-    sync::net_sync(
+    let (tx, rx) = channel::<shared_chain_state::Event>();
+
+    shared_chain_state::start_update_thread(net.shared_chain_state.clone(), rx);
+
+    net_sync(
         &mut sync::get_peer(&label, &net_cfg, true),
         &net_cfg,
         &genesis_data,
         net.storage.clone(),
-        false,
+        tx,
     )
     .unwrap_or_else(|err| warn!("Sync failed: {:?}", err));
+}
+
+fn net_sync(
+    net: &mut Peer,
+    net_cfg: &net::Config,
+    genesis_data: &GenesisData,
+    storage: Arc<RwLock<Storage>>,
+    tx: Sender<shared_chain_state::Event>,
+) -> Result<(), exe_common::network::error::Error> {
+    let mut tip_header = net.get_tip()?;
+
+    loop {
+        sync::net_sync(net, &net_cfg, &genesis_data, storage.clone(), true)?;
+
+        match tx.send(shared_chain_state::Event::NewTip) {
+            Ok(_) => (),
+            Err(_) => warn!("There is no receiver for the NewTip message"),
+        }
+
+        tip_header = net.wait_for_new_tip(&tip_header.compute_hash())?;
+    }
 }
