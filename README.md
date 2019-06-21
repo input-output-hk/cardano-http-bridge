@@ -17,8 +17,6 @@ And to post transactions
 1. you need to [install the rust toolchain](https://www.rust-lang.org/tools/install);
 2. you need to build the project: `cargo build --release`
 
-The binary would be created in the ./target/release directory
-
 # How to start a new http bridge instance
 
 You are interested only about the `start` command:
@@ -29,13 +27,7 @@ Options:
 * `--port <PORT NUMBER>`                   set the port number to listen to [default: 80]
 * `--template <TEMPLATE>...`               either 'mainnet' or 'testnet'; may be given multiple times [default: mainnet]  [possible values: mainnet, staging, testnet]
 
-Example, if you wish the http-bridge to server mainnet and staging from the root directory of the repository
-
-```
-./target/release/cardano-http-bridge start --port=80 --template=mainnet,staging
-```
-
-or
+Example, if you wish the http-bridge to server mainnet and staging 
 
 ```
 cargo run --release -- start --port=80 --template=mainnet,staging
