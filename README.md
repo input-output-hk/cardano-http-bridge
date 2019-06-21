@@ -87,7 +87,14 @@ disseminated to the different nodes it knows of:
 
 * `:network` is any of the network passed to the `--template` options at startup.
 
-The body of the request is the base64 encoded signed transaction.
+The body of the request is a json with the serialized signed transaction in base64 with the following format
+
+### Example
+```json
+{
+    "signedTx": "goOfggDYGFgkglggAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB/5+CgtgYWCGDWBz9PnIoa40sFCzLwMLn+UVjOaRTzU6Wtf50npvsoAAa/moZtxkD6P+ggYIA2BhYhYJYQPRJ3yEtBixg/AmPLmVQ5qvdocgI7+LNE4rnE24YiW4GKxsT8AM8LDke8p7xizOMEW9eB5OFZigGi182w8yCErJYQHepDmtCsTSt2mcv48lddbB3EZtorHq3TY8D2n55j2gRa95oV4FvYNMG40zrpm3nGM0AtwMYJgEs6Ys3yAn3iAw=" 
+}
+```
 
 ## GET: `/:network/utxos/:address`
 
